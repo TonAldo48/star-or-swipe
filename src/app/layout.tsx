@@ -3,6 +3,7 @@ import { Dancing_Script, Quicksand } from "next/font/google";
 import TopNav from "@/components/top-nav";
 import BottomNav from "@/components/bottom-nav";
 import { AuthProvider } from "@/lib/auth";
+import { Analytics } from '@vercel/analytics/react';
 import "./globals.css";
 
 const dancingScript = Dancing_Script({
@@ -90,6 +91,7 @@ export default function RootLayout({
             {children}
           </div>
           <BottomNav />
+          <Analytics />
         </AuthProvider>
       </body>
     </html>

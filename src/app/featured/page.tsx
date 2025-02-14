@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @next/next/no-img-element */
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -56,6 +58,9 @@ export default function FeaturedPage() {
   async function toggleFeatured(repository: Repository) {
     const newFeatured = !featuredRepos.has(repository.id);
     try {
+      if (!db) {
+        throw new Error('Firestore database not initialized');
+      }
       await updateFeaturedRepository(db, repository, newFeatured);
       
       if (newFeatured) {
