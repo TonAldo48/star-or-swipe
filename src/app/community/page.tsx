@@ -4,12 +4,13 @@ import { useEffect, useState } from 'react';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar } from '@/components/ui/avatar';
-import { Repository, getRandomRepositories } from '@/lib/github';
+import { FeaturedRepository, getRandomFeaturedRepositories } from '@/lib/github';
+import { db } from '@/lib/firebase';
 import { useSwipeable } from 'react-swipeable';
 import Link from 'next/link';
 
-export default function Home() {
-  const [repositories, setRepositories] = useState<Repository[]>([]);
+export default function CommunityPage() {
+  const [repositories, setRepositories] = useState<FeaturedRepository[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [swipeDirection, setSwipeDirection] = useState<'left' | 'right' | null>(null);
@@ -22,7 +23,7 @@ export default function Home() {
 
   async function loadRepositories() {
     try {
-      const repos = await getRandomRepositories();
+      const repos = await getRandomFeaturedRepositories(db);
       setRepositories(repos);
       setLoading(false);
     } catch (error) {
@@ -114,7 +115,31 @@ export default function Home() {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gradient-to-b from-pink-100 via-red-50 to-pink-50">
         <div className="text-3xl font-[Dancing_Script] text-pink-600 animate-pulse">
-          Finding lovely repositories... 💝
+          Finding featured repositories... 💝
+        </div>
+      </div>
+    );
+  }
+
+  if (repositories.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-b from-pink-100 via-red-50 to-pink-50 p-8">
+        <h1 className="font-[Dancing_Script] text-5xl text-pink-600 mb-8">
+          Community Picks 💝
+        </h1>
+        <div className="text-center space-y-6">
+          <p className="text-xl text-gray-600">
+            No featured repositories yet!
+          </p>
+          <Button
+            variant="outline"
+            asChild
+            className="bg-white/90 hover:bg-white"
+          >
+            <Link href="/featured">
+              Feature Some Repositories 💖
+            </Link>
+          </Button>
         </div>
       </div>
     );
@@ -123,15 +148,26 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-gradient-to-b from-pink-100 via-red-50 to-pink-50 overflow-hidden font-[Quicksand]">
       <div className="absolute top-4 right-4 z-50">
-        <Button
-          variant="outline"
-          asChild
-          className="bg-white/90 hover:bg-white"
-        >
-          <Link href="/featured">
-            Manage Featured 💝
-          </Link>
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            asChild
+            className="bg-white/90 hover:bg-white"
+          >
+            <Link href="/featured">
+              Feature More 💝
+            </Link>
+          </Button>
+          <Button
+            variant="outline"
+            asChild
+            className="bg-white/90 hover:bg-white"
+          >
+            <Link href="/">
+              Popular Repos
+            </Link>
+          </Button>
+        </div>
       </div>
 
       <div className="absolute inset-0 overflow-hidden">
@@ -153,10 +189,10 @@ export default function Home() {
       <div className="relative flex flex-col items-center justify-between min-h-screen p-8 md:p-12 lg:p-24">
         <div className="w-full max-w-4xl mx-auto text-center space-y-4">
           <h1 className="font-[Dancing_Script] text-5xl md:text-6xl lg:text-7xl text-pink-600 mb-2 drop-shadow-lg">
-            Star or Swipe 💝
+            Community Picks 💝
           </h1>
           <p className="text-pink-500 text-xl md:text-2xl tracking-wide">
-            Find your next favorite repository!
+            Discover repositories featured by the community!
           </p>
         </div>
 
@@ -251,4 +287,4 @@ export default function Home() {
       </div>
     </main>
   );
-}
+} 

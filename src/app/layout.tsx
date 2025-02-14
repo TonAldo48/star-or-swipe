@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Dancing_Script, Quicksand } from "next/font/google";
-import AuthProvider from "@/components/providers/session-provider";
+import Navigation from "@/components/navigation";
 import "./globals.css";
 
 const dancingScript = Dancing_Script({
@@ -26,7 +26,8 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${dancingScript.variable} ${quicksand.variable} font-sans`}>
-        <AuthProvider>{children}</AuthProvider>
+        <Navigation />
+        {children}
       </body>
     </html>
   );
