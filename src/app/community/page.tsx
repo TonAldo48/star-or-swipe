@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar } from '@/components/ui/avatar';
@@ -23,11 +23,7 @@ export default function CommunityPage() {
   const [isDragging, setIsDragging] = useState(false);
   const [offset, setOffset] = useState(0);
 
-  useEffect(() => {
-    loadRepositories();
-  }, []);
-
-  async function loadRepositories() {
+  const loadRepositories = useCallback(async () => {
     try {
       let repos = await getRandomFeaturedRepositories(db);
       // Filter out repositories that have been swiped before
@@ -38,7 +34,11 @@ export default function CommunityPage() {
       console.error('Error loading repositories:', error);
       setLoading(false);
     }
-  }
+  }, [user?.uid]);
+
+  useEffect(() => {
+    loadRepositories();
+  }, [loadRepositories]);
 
   const visibleRepos = repositories.slice(currentIndex, currentIndex + 3);
 
@@ -261,7 +261,7 @@ export default function CommunityPage() {
                   </p>
                   <div className="mt-6 flex justify-center space-x-4">
                     <span className="text-sm bg-pink-50 px-4 py-2 rounded-full border border-pink-200">
-                      ⭐ {repo.stargazers_count.toLocaleString()}
+                      ⭐ {(repo.stargazers_count || 0).toLocaleString()}
                     </span>
                     {repo.language && (
                       <span className="text-sm bg-pink-50 px-4 py-2 rounded-full border border-pink-200">

@@ -2,6 +2,7 @@
 
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/lib/auth';
+import Image from 'next/image';
 
 export default function TopNav() {
   const { user, signInWithGithub, signOutUser } = useAuth();
@@ -12,10 +13,12 @@ export default function TopNav() {
         <div className="flex justify-end items-center h-12">
           {user ? (
             <div className="flex items-center gap-2 py-2">
-              <img
+              <Image
                 src={user.photoURL || ''}
                 alt={user.displayName || 'User'}
-                className="w-7 h-7 rounded-full ring-1 ring-pink-200 ring-offset-1"
+                width={32}
+                height={32}
+                className="rounded-full"
               />
               <Button
                 variant="ghost"

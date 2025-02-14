@@ -1,12 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar } from '@/components/ui/avatar';
 import { Repository, getRandomRepositories } from '@/lib/github';
 import { useSwipeable } from 'react-swipeable';
-import Link from 'next/link';
 import { playRandomKissSound, playPopSound, playSwooshSound, markUserInteraction } from '@/lib/audio';
 import { useAuth } from '@/lib/auth';
 import { Octokit } from 'octokit';
@@ -21,7 +20,20 @@ export default function Home() {
   const [isDragging, setIsDragging] = useState(false);
   const [offset, setOffset] = useState(0);
   const { user, signInWithGithub } = useAuth();
-  const [starredRepos, setStarredRepos] = useState<Set<number>>(new Set());
+
+  const loadRepositories = useCallback(async () => {
+    try {
+      const octokit = new Octokit();
+      let repos = await getRandomRepositories(octokit);
+      // Filter out repositories that have been swiped before
+      repos = repos.filter(repo => !hasBeenSwiped(repo.id, user?.uid));
+      setRepositories(repos);
+      setLoading(false);
+    } catch (error) {
+      console.error('Error loading repositories:', error);
+      setLoading(false);
+    }
+  }, [user?.uid]);
 
   useEffect(() => {
     loadRepositories();
@@ -34,7 +46,6 @@ export default function Home() {
       const fetchStarredRepos = async () => {
         try {
           const { data: starred } = await octokit.request('GET /user/starred');
-          setStarredRepos(new Set(starred.map(repo => repo.id)));
         } catch (error) {
           console.error('Error fetching starred repos:', error);
         }
@@ -42,20 +53,7 @@ export default function Home() {
 
       fetchStarredRepos();
     }
-  }, [user]);
-
-  async function loadRepositories() {
-    try {
-      let repos = await getRandomRepositories();
-      // Filter out repositories that have been swiped before
-      repos = repos.filter(repo => !hasBeenSwiped(repo.id, user?.uid));
-      setRepositories(repos);
-      setLoading(false);
-    } catch (error) {
-      console.error('Error loading repositories:', error);
-      setLoading(false);
-    }
-  }
+  }, [user, loadRepositories]);
 
   const visibleRepos = repositories.slice(currentIndex, currentIndex + 3);
 
@@ -254,7 +252,7 @@ export default function Home() {
                   </p>
                   <div className="mt-6 flex justify-center space-x-4">
                     <span className="text-sm bg-pink-50 px-4 py-2 rounded-full border border-pink-200">
-                      ⭐ {repo.stargazers_count.toLocaleString()}
+                      ⭐ {(repo.stargazers_count || 0).toLocaleString()}
                     </span>
                     {repo.language && (
                       <span className="text-sm bg-pink-50 px-4 py-2 rounded-full border border-pink-200">

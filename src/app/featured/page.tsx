@@ -8,6 +8,12 @@ import { db } from '@/lib/firebase';
 import { Avatar } from '@/components/ui/avatar';
 import Link from 'next/link';
 import { Input } from '@/components/ui/input';
+import { useSwipeable } from 'react-swipeable';
+import { playRandomKissSound, playPopSound, playSwooshSound, markUserInteraction } from '@/lib/audio';
+import { useAuth } from '@/lib/auth';
+import { Octokit } from 'octokit';
+import { fireLoveConfetti } from '@/lib/confetti';
+import { addToSwipeHistory, hasBeenSwiped } from '@/lib/swipe-history';
 
 export default function FeaturedPage() {
   const [username, setUsername] = useState('');
@@ -39,7 +45,8 @@ export default function FeaturedPage() {
 
   async function loadFeaturedRepositories() {
     try {
-      const featured = await getFeaturedRepositories(db);
+      const octokit = new Octokit();
+      const featured = await getFeaturedRepositories(octokit);
       setFeaturedRepos(new Set(featured.map(repo => repo.id)));
     } catch (error) {
       console.error('Error loading featured repositories:', error);
@@ -143,7 +150,7 @@ export default function FeaturedPage() {
                   </p>
                   <div className="flex flex-wrap gap-2 sm:gap-3 mt-3 sm:mt-4">
                     <span className="text-xs sm:text-sm bg-pink-50 px-2 sm:px-3 py-1 rounded-full border border-pink-200">
-                      ⭐ {repo.stargazers_count.toLocaleString()}
+                      ⭐ {(repo.stargazers_count || 0).toLocaleString()}
                     </span>
                     {repo.language && (
                       <span className="text-xs sm:text-sm bg-pink-50 px-2 sm:px-3 py-1 rounded-full border border-pink-200">
