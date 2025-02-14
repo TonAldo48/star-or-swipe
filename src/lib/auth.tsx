@@ -8,7 +8,8 @@ import {
   signInWithPopup, 
   signInWithRedirect,
   getRedirectResult,
-  signOut 
+  signOut,
+  AuthError
 } from 'firebase/auth';
 
 interface AuthUser extends User {
@@ -47,32 +48,55 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Handle redirect result on mount and after redirects
   useEffect(() => {
     if (!auth) return;
 
+    setLoading(true); // Set loading while checking redirect
+    
     // Check for redirect result when the component mounts
-    getRedirectResult(auth).then((result) => {
-      if (result) {
-        const credential = GithubAuthProvider.credentialFromResult(result);
-        const token = credential?.accessToken;
-        
-        if (result.user && token) {
-          setUser({
-            ...result.user,
-            githubAccessToken: token,
-          });
+    getRedirectResult(auth)
+      .then((result) => {
+        if (result) {
+          const credential = GithubAuthProvider.credentialFromResult(result);
+          const token = credential?.accessToken;
+          
+          if (result.user && token) {
+            console.log('Successfully signed in after redirect');
+            setUser({
+              ...result.user,
+              githubAccessToken: token,
+            });
+          }
         }
-      }
-    }).catch((error) => {
-      console.error('Error getting redirect result:', error);
-    });
+      })
+      .catch((error) => {
+        const authError = error as AuthError;
+        console.error('Error getting redirect result:', {
+          code: authError.code,
+          message: authError.message,
+          email: authError.customData?.email,
+        });
+      })
+      .finally(() => {
+        setLoading(false);
+      });
 
+    // Listen for auth state changes
     const unsubscribe = auth.onAuthStateChanged((firebaseUser) => {
+      console.log('Auth state changed:', firebaseUser ? 'User logged in' : 'No user');
       if (firebaseUser) {
-        setUser(prev => ({
-          ...firebaseUser,
-          githubAccessToken: prev?.githubAccessToken, // Preserve the token if it exists
-        }));
+        // Get the most recent credential to ensure we have the token
+        const currentProvider = firebaseUser.providerData[0];
+        if (currentProvider?.providerId === 'github.com') {
+          setUser({
+            ...firebaseUser,
+            // We'll get the token from the redirect result instead
+            githubAccessToken: undefined,
+          });
+        } else {
+          setUser(firebaseUser as AuthUser);
+        }
       } else {
         setUser(null);
       }
@@ -92,37 +116,43 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       provider.addScope('public_repo');
 
       if (isMobileDevice()) {
+        console.log('Using redirect sign-in for mobile device');
+        // Clear any existing auth state before redirect
+        await signOut(auth);
         // Use redirect method for mobile devices
         await signInWithRedirect(auth, provider);
+        // The page will redirect to GitHub at this point
       } else {
+        console.log('Using popup sign-in for desktop');
         // Use popup for desktop
         const result = await signInWithPopup(auth, provider);
         const credential = GithubAuthProvider.credentialFromResult(result);
         const token = credential?.accessToken;
         
         if (result.user && token) {
+          console.log('Successfully signed in with popup');
           setUser({
             ...result.user,
             githubAccessToken: token,
           });
         }
       }
-    } catch (error: any) {
+    } catch (error) {
+      const authError = error as AuthError;
       console.error('Error signing in with GitHub:', {
-        code: error.code,
-        message: error.message,
-        email: error.email,
-        credential: error.credential,
+        code: authError.code,
+        message: authError.message,
+        email: authError.customData?.email,
       });
       
       // Log specific Firebase Auth errors
-      if (error.code === 'auth/popup-blocked') {
+      if (authError.code === 'auth/popup-blocked') {
         console.error('Popup was blocked by the browser');
-      } else if (error.code === 'auth/popup-closed-by-user') {
+      } else if (authError.code === 'auth/popup-closed-by-user') {
         console.error('Popup was closed by the user');
-      } else if (error.code === 'auth/unauthorized-domain') {
+      } else if (authError.code === 'auth/unauthorized-domain') {
         console.error('Domain not authorized for Firebase Auth');
-      } else if (error.code === 'auth/operation-not-allowed') {
+      } else if (authError.code === 'auth/operation-not-allowed') {
         console.error('GitHub authentication not enabled in Firebase');
       }
       
