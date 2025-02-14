@@ -107,8 +107,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           });
         }
       }
-    } catch (error) {
-      console.error('Error signing in with GitHub:', error);
+    } catch (error: any) {
+      console.error('Error signing in with GitHub:', {
+        code: error.code,
+        message: error.message,
+        email: error.email,
+        credential: error.credential,
+      });
+      
+      // Log specific Firebase Auth errors
+      if (error.code === 'auth/popup-blocked') {
+        console.error('Popup was blocked by the browser');
+      } else if (error.code === 'auth/popup-closed-by-user') {
+        console.error('Popup was closed by the user');
+      } else if (error.code === 'auth/unauthorized-domain') {
+        console.error('Domain not authorized for Firebase Auth');
+      } else if (error.code === 'auth/operation-not-allowed') {
+        console.error('GitHub authentication not enabled in Firebase');
+      }
+      
+      throw error; // Re-throw to handle in UI if needed
     }
   };
 
