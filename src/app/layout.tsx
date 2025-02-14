@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Dancing_Script, Quicksand } from "next/font/google";
+import TopNav from "@/components/top-nav";
 import BottomNav from "@/components/bottom-nav";
+import { AuthProvider } from "@/lib/auth";
 import "./globals.css";
 
 const dancingScript = Dancing_Script({
@@ -26,8 +28,13 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${dancingScript.variable} ${quicksand.variable} font-sans`}>
-        {children}
-        <BottomNav />
+        <AuthProvider>
+          <TopNav />
+          <div className="pt-16">
+            {children}
+          </div>
+          <BottomNav />
+        </AuthProvider>
       </body>
     </html>
   );

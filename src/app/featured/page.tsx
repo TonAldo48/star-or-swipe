@@ -78,10 +78,10 @@ export default function FeaturedPage() {
       <div className="w-full max-w-6xl mx-auto p-4 sm:p-8">
         <div className="w-full text-center space-y-4 mb-8 sm:mb-12">
           <h1 className="font-[Dancing_Script] text-4xl sm:text-5xl md:text-6xl lg:text-7xl text-pink-600 mb-2 drop-shadow-lg">
-            Featured Repositories
+            Your Repositories
           </h1>
           <p className="text-pink-500 text-lg sm:text-xl md:text-2xl tracking-wide">
-            Feature your favorite repositories!
+            Add your repositories to the community! 💝
           </p>
 
           <form onSubmit={handleSubmit} className="max-w-md mx-auto mt-8">
@@ -163,7 +163,7 @@ export default function FeaturedPage() {
                           : 'border-pink-200 hover:border-pink-300'
                       }`}
                     >
-                      {featuredRepos.has(repo.id) ? 'Featured 💝' : 'Feature this 💖'}
+                      {featuredRepos.has(repo.id) ? 'Added to Community 💝' : 'Add to Community 💖'}
                     </Button>
                     <Button
                       variant="outline"

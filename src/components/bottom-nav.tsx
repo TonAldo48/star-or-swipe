@@ -46,7 +46,7 @@ export default function BottomNav() {
           }`}
         >
           <Link href="/featured">
-            Feature 💖
+            Add Yours 💖
           </Link>
         </Button>
       </div>

@@ -8,8 +8,14 @@ import { FeaturedRepository, getRandomFeaturedRepositories } from '@/lib/github'
 import { db } from '@/lib/firebase';
 import { useSwipeable } from 'react-swipeable';
 import Link from 'next/link';
+import { playRandomKissSound, playPopSound, playSwooshSound, markUserInteraction } from '@/lib/audio';
+import { Octokit } from '@octokit/core';
+import { useAuth } from '@/lib/auth';
+import { fireLoveConfetti } from '@/lib/confetti';
+import { addToSwipeHistory, hasBeenSwiped } from '@/lib/swipe-history';
 
 export default function CommunityPage() {
+  const { user, signInWithGithub } = useAuth();
   const [repositories, setRepositories] = useState<FeaturedRepository[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -23,7 +29,9 @@ export default function CommunityPage() {
 
   async function loadRepositories() {
     try {
-      const repos = await getRandomFeaturedRepositories(db);
+      let repos = await getRandomFeaturedRepositories(db);
+      // Filter out repositories that have been swiped before
+      repos = repos.filter(repo => !hasBeenSwiped(repo.id, user?.uid));
       setRepositories(repos);
       setLoading(false);
     } catch (error) {
@@ -34,11 +42,32 @@ export default function CommunityPage() {
 
   const visibleRepos = repositories.slice(currentIndex, currentIndex + 3);
 
-  function handleStar() {
+  async function handleStar() {
+    markUserInteraction();
+    if (!user?.githubAccessToken) {
+      // If not logged in, show a message or trigger login
+      return;
+    }
+
     setSwipeDirection('right');
     const repo = repositories[currentIndex];
     if (repo) {
-      window.open(repo.html_url, '_blank');
+      try {
+        const octokit = new Octokit({
+          auth: user.githubAccessToken,
+        });
+
+        await octokit.request('PUT /user/starred/{owner}/{repo}', {
+          owner: repo.owner.login,
+          repo: repo.name,
+        });
+
+        playRandomKissSound();
+        fireLoveConfetti();
+        addToSwipeHistory(repo.id, user.uid);
+      } catch (error) {
+        console.error('Error starring repository:', error);
+      }
     }
     setTimeout(() => {
       handleNext();
@@ -47,7 +76,13 @@ export default function CommunityPage() {
   }
 
   function handleSwipe() {
+    markUserInteraction();
     setSwipeDirection('left');
+    playPopSound();
+    const repo = repositories[currentIndex];
+    if (repo) {
+      addToSwipeHistory(repo.id, user?.uid);
+    }
     setTimeout(() => {
       handleNext();
       setSwipeDirection(null);
@@ -68,6 +103,10 @@ export default function CommunityPage() {
     onSwiping: (event) => {
       setIsDragging(true);
       setOffset(event.deltaX);
+      markUserInteraction();
+      if (Math.abs(event.deltaX) > 50) {
+        playSwooshSound();
+      }
     },
     onSwipedLeft: () => {
       setIsDragging(false);
@@ -80,6 +119,12 @@ export default function CommunityPage() {
     onSwipedRight: () => {
       setIsDragging(false);
       if (Math.abs(offset) > 100) {
+        if (!user?.githubAccessToken) {
+          // If not logged in, trigger login
+          signInWithGithub();
+          setOffset(0);
+          return;
+        }
         handleStar();
       } else {
         setOffset(0);
@@ -205,13 +250,6 @@ export default function CommunityPage() {
                     <h2 className="text-2xl font-semibold text-gray-800 break-words">
                       {repo.name}
                     </h2>
-                    <button 
-                      onClick={() => window.open(repo.html_url, '_blank')}
-                      className="ml-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                      aria-label="View repository on GitHub"
-                    >
-                      <span className="text-pink-500 hover:text-pink-600">🔗</span>
-                    </button>
                   </div>
                   <p className="font-[Dancing_Script] text-xl text-pink-500">
                     by {repo.owner.login}
@@ -233,23 +271,32 @@ export default function CommunityPage() {
                   </div>
                 </CardContent>
                 {index === 0 && (
-                  <CardFooter className="flex justify-center space-x-6 pt-6">
+                  <CardFooter className="flex flex-col gap-2 pt-4">
+                    <div className="flex justify-center space-x-4 w-full">
+                      <Button
+                        variant="outline"
+                        className="bg-pink-50 hover:bg-pink-100 border-pink-200 hover:border-pink-300 
+                          text-base px-8 py-4 rounded-full shadow-sm
+                          transition-all duration-200 hover:shadow-md"
+                        onClick={handleSwipe}
+                      >
+                        Skip 💔
+                      </Button>
+                      <Button
+                        className="bg-pink-500 hover:bg-pink-600 text-white 
+                          text-base px-8 py-4 rounded-full shadow-sm
+                          transition-all duration-200 hover:shadow-md"
+                        onClick={handleStar}
+                      >
+                        Star 💖
+                      </Button>
+                    </div>
                     <Button
-                      variant="outline"
-                      className="bg-pink-50 hover:bg-pink-100 border-pink-200 hover:border-pink-300 
-                        text-base px-10 py-6 rounded-full shadow-sm
-                        transition-all duration-200 hover:shadow-md"
-                      onClick={handleSwipe}
+                      variant="link"
+                      className="text-pink-500 hover:text-pink-600 h-8 px-2"
+                      onClick={() => window.open(repo.html_url, '_blank')}
                     >
-                      Skip 💔
-                    </Button>
-                    <Button
-                      className="bg-pink-500 hover:bg-pink-600 text-white 
-                        text-base px-10 py-6 rounded-full shadow-sm
-                        transition-all duration-200 hover:shadow-md"
-                      onClick={handleStar}
-                    >
-                      View 💖
+                      View on GitHub 🔗
                     </Button>
                   </CardFooter>
                 )}
@@ -259,7 +306,7 @@ export default function CommunityPage() {
         </div>
 
         <div className="font-[Dancing_Script] text-center text-pink-600 text-xl md:text-2xl">
-          Swipe right to view ⭐️, left to skip 💔
+          Swipe right to star ⭐️, left to skip 💔
         </div>
       </div>
     </main>
