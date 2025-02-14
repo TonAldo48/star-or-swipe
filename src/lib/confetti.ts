@@ -2,9 +2,9 @@ import confetti from 'canvas-confetti';
 
 export function fireLoveConfetti() {
   const count = 200;
-  const defaults = {
+  const defaults: confetti.Options = {
     origin: { y: 0.7 },
-    shapes: ['heart'],
+    shapes: ['circle'],
     colors: ['#ff758f', '#ff477e', '#ff0a54', '#ff7096', '#ff8fa3'],
   };
 
