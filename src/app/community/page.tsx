@@ -1,5 +1,6 @@
 'use client';
 
+/* eslint-disable @next/next/no-img-element */
 import { useEffect, useState, useCallback } from 'react';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -25,19 +26,33 @@ export default function CommunityPage() {
 
   const loadRepositories = useCallback(async () => {
     try {
+      // Only attempt to load repositories if we're in the browser
+      if (typeof window === 'undefined') {
+        return;
+      }
+      
+      if (!db) {
+        console.error('Firestore database not initialized');
+        setLoading(false);
+        return;
+      }
+
       let repos = await getRandomFeaturedRepositories(db);
       // Filter out repositories that have been swiped before
       repos = repos.filter(repo => !hasBeenSwiped(repo.id, user?.uid));
       setRepositories(repos);
-      setLoading(false);
     } catch (error) {
       console.error('Error loading repositories:', error);
+    } finally {
       setLoading(false);
     }
   }, [user?.uid]);
 
   useEffect(() => {
-    loadRepositories();
+    // Ensure we're in the browser before loading repositories
+    if (typeof window !== 'undefined') {
+      loadRepositories();
+    }
   }, [loadRepositories]);
 
   const visibleRepos = repositories.slice(currentIndex, currentIndex + 3);

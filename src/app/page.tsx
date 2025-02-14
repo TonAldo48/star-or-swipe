@@ -1,5 +1,6 @@
 'use client';
 
+/* eslint-disable @next/next/no-img-element */
 import { useEffect, useState, useCallback } from 'react';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -43,15 +44,10 @@ export default function Home() {
         auth: user.githubAccessToken,
       });
       
-      const fetchStarredRepos = async () => {
-        try {
-          const { data: starred } = await octokit.request('GET /user/starred');
-        } catch (error) {
-          console.error('Error fetching starred repos:', error);
-        }
-      };
-
-      fetchStarredRepos();
+      // Fetch starred repos in the background
+      octokit.request('GET /user/starred').catch(error => {
+        console.error('Error fetching starred repos:', error);
+      });
     }
   }, [user, loadRepositories]);
 

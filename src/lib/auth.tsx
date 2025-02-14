@@ -27,44 +27,43 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (auth) {
-      const unsubscribe = auth.onAuthStateChanged((user) => {
-        if (user) {
-          // Get the GitHub access token from the credential
-          const credential = GithubAuthProvider.credentialFromResult(auth.currentUser);
-          const token = credential?.accessToken;
-          
-          setUser({
-            ...user,
-            githubAccessToken: token,
-          });
-        } else {
-          setUser(null);
-        }
-        setLoading(false);
-      });
+    if (!auth) return;
 
-      return () => unsubscribe();
-    }
+    const unsubscribe = auth.onAuthStateChanged((firebaseUser) => {
+      if (firebaseUser) {
+        // We'll get the token from the sign-in process instead
+        setUser({
+          ...firebaseUser,
+          githubAccessToken: undefined, // Will be set during sign in
+        });
+      } else {
+        setUser(null);
+      }
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
   }, []);
 
   const signInWithGithub = async () => {
     try {
+      if (!auth) {
+        throw new Error('Firebase auth not initialized');
+      }
+
       const provider = new GithubAuthProvider();
       // Only request public access and starring ability
       provider.addScope('public_repo');
       
-      if (auth) {
-        const result = await signInWithPopup(auth, provider);
-        const credential = GithubAuthProvider.credentialFromResult(result);
-        const token = credential?.accessToken;
-        
-        if (result.user && token) {
-          setUser({
-            ...result.user,
-            githubAccessToken: token,
-          });
-        }
+      const result = await signInWithPopup(auth, provider);
+      const credential = GithubAuthProvider.credentialFromResult(result);
+      const token = credential?.accessToken;
+      
+      if (result.user && token) {
+        setUser({
+          ...result.user,
+          githubAccessToken: token,
+        });
       }
     } catch (error) {
       console.error('Error signing in with GitHub:', error);
@@ -73,10 +72,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signOutUser = async () => {
     try {
-      if (auth) {
-        await signOut(auth);
-        setUser(null);
+      if (!auth) {
+        throw new Error('Firebase auth not initialized');
       }
+
+      await signOut(auth);
+      setUser(null);
     } catch (error) {
       console.error('Error signing out:', error);
     }

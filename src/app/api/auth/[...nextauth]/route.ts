@@ -2,6 +2,7 @@ import NextAuth from "next-auth";
 import GithubProvider from "next-auth/providers/github";
 import { signInWithCredential, GithubAuthProvider } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
+import type { GitHubProfile } from "next-auth/providers/github";
 
 const handler = NextAuth({
   providers: [
@@ -17,15 +18,23 @@ const handler = NextAuth({
     }),
   ],
   callbacks: {
-    async jwt({ token, account, profile, user }) {
-      console.log('JWT Callback - Token before:', token);
-      console.log('JWT Callback - Account:', account);
-      console.log('JWT Callback - User:', user);
-
+    async jwt({ token, account, profile }) {
       if (account && account.access_token) {
-        // Initial sign in
         token.accessToken = account.access_token;
-        token.profile = profile;
+        
+        // Cast profile to GitHubProfile type
+        const githubProfile = profile as GitHubProfile;
+        if (githubProfile) {
+          token.profile = {
+            login: githubProfile.login,
+            id: githubProfile.id,
+            node_id: githubProfile.node_id,
+            avatar_url: githubProfile.avatar_url,
+            html_url: githubProfile.html_url,
+            name: githubProfile.name,
+            email: githubProfile.email,
+          };
+        }
         
         try {
           const credential = GithubAuthProvider.credential(account.access_token);
@@ -35,28 +44,21 @@ const handler = NextAuth({
           console.error('Error signing in with Firebase:', error);
         }
       }
-
-      console.log('JWT Callback - Token after:', token);
       return token;
     },
-    async session({ session, token, user }) {
-      console.log('Session Callback - Input:', { session, token, user });
-
-      // Make sure to copy the access token to the session
+    async session({ session, token }) {
       if (token) {
         session.accessToken = token.accessToken;
         session.firebaseUid = token.firebaseUid;
         
-        // Ensure user profile data is included
         if (token.profile) {
           session.user = {
             ...session.user,
-            ...token.profile,
+            id: token.profile.id.toString(),
+            githubAccessToken: token.accessToken,
           };
         }
       }
-
-      console.log('Session Callback - Output:', session);
       return session;
     },
   },
