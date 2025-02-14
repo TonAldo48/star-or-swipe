@@ -74,29 +74,8 @@ export default function FeaturedPage() {
   };
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-pink-100 via-red-50 to-pink-50 overflow-hidden font-[Quicksand]">
-      <div className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-sm border-b border-pink-100 px-4 py-3">
-        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-2">
-          <Link 
-            href="/"
-            className="font-[Dancing_Script] text-2xl text-pink-600 hover:text-pink-700 transition-colors"
-          >
-            Star or Swipe 💝
-          </Link>
-
-          <Button
-            variant="outline"
-            asChild
-            className="bg-white/90 hover:bg-white text-sm"
-          >
-            <Link href="/">
-              Back to Swipe
-            </Link>
-          </Button>
-        </div>
-      </div>
-
-      <div className="relative w-full max-w-6xl mx-auto p-4 sm:p-8 pt-24">
+    <main className="min-h-screen bg-gradient-to-b from-pink-100 via-red-50 to-pink-50 overflow-hidden font-[Quicksand] pb-24">
+      <div className="w-full max-w-6xl mx-auto p-4 sm:p-8">
         <div className="w-full text-center space-y-4 mb-8 sm:mb-12">
           <h1 className="font-[Dancing_Script] text-4xl sm:text-5xl md:text-6xl lg:text-7xl text-pink-600 mb-2 drop-shadow-lg">
             Featured Repositories

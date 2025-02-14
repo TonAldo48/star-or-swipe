@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Dancing_Script, Quicksand } from "next/font/google";
-import Navigation from "@/components/navigation";
+import BottomNav from "@/components/bottom-nav";
 import "./globals.css";
 
 const dancingScript = Dancing_Script({
@@ -26,8 +26,8 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${dancingScript.variable} ${quicksand.variable} font-sans`}>
-        <Navigation />
         {children}
+        <BottomNav />
       </body>
     </html>
   );

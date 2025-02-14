@@ -121,19 +121,7 @@ export default function Home() {
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-pink-100 via-red-50 to-pink-50 overflow-hidden font-[Quicksand]">
-      <div className="absolute top-4 right-4 z-50">
-        <Button
-          variant="outline"
-          asChild
-          className="bg-white/90 hover:bg-white"
-        >
-          <Link href="/featured">
-            Manage Featured 💝
-          </Link>
-        </Button>
-      </div>
-
+    <main className="min-h-screen bg-gradient-to-b from-pink-100 via-red-50 to-pink-50 overflow-hidden font-[Quicksand] pb-24">
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute top-[-10%] left-[-10%] w-[120%] h-[120%] opacity-30 animate-spin-slow">
           {[...Array(12)].map((_, i) => (
